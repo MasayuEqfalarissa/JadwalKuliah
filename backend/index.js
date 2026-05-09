@@ -1,13 +1,13 @@
+require('dns').setDefaultResultOrder('ipv4first');
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
-const dotenv = require('dotenv');
 const path = require('path');
 const authRoutes = require('./routes/auth');
 const scheduleRoutes = require('./routes/schedules');
 const assignmentRoutes = require('./routes/assignments');
 const examRoutes = require('./routes/exams');
-
-dotenv.config();
 
 const app = express();
 
