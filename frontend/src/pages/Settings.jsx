@@ -53,7 +53,7 @@ const Settings = () => {
                         <div className="relative group">
                             <div className="w-24 h-24 rounded-full bg-slate-200 dark:bg-slate-800 border-4 border-white dark:border-slate-900 shadow-lg overflow-hidden flex items-center justify-center text-slate-500 shrink-0">
                                 {user?.profile_picture ? (
-                                    <img src={`http://localhost:5000${user.profile_picture}`} alt="Profile" className="w-full h-full object-cover" />
+                                    <img src={user.profile_picture.startsWith('http') ? user.profile_picture : `http://localhost:5000${user.profile_picture}`} alt="Profile" className="w-full h-full object-cover" />
                                 ) : (
                                     <User size={40} />
                                 )}

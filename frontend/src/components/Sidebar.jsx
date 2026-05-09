@@ -81,7 +81,7 @@ const Sidebar = () => {
                 <div className="p-4 border-t border-slate-200 dark:border-slate-800 space-y-2">
                     <div className="flex items-center gap-3 px-4 py-3 mb-2 rounded-xl bg-slate-50 dark:bg-slate-800/50">
                         {user?.profile_picture ? (
-                            <img src={`http://localhost:5000${user.profile_picture}`} alt="Profile" className="w-10 h-10 rounded-full object-cover border-2 border-white dark:border-slate-700" />
+                            <img src={user.profile_picture.startsWith('http') ? user.profile_picture : `http://localhost:5000${user.profile_picture}`} alt="Profile" className="w-10 h-10 rounded-full object-cover border-2 border-white dark:border-slate-700" />
                         ) : (
                             <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold">
                                 {user?.name?.charAt(0).toUpperCase()}

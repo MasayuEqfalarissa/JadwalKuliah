@@ -1,64 +1,63 @@
-const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
+const { Pool } = require('pg');
 
-const dbPath = path.resolve(__dirname, 'database.sqlite');
-const db = new sqlite3.Database(dbPath, (err) => {
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false }
+});
+
+pool.connect((err, client, release) => {
     if (err) {
-        console.error('Error opening database', err.message);
+        console.error('Error acquiring client', err.stack);
     } else {
-        console.log('Connected to the SQLite database.');
+        console.log('Connected to PostgreSQL database.');
         
-        // Create tables
-        db.serialize(() => {
-            // Users Table
-            db.run(`CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL,
-                email TEXT UNIQUE NOT NULL,
-                password TEXT NOT NULL
-            )`, () => {
-                // Add profile_picture column if not exists
-                db.run(`ALTER TABLE users ADD COLUMN profile_picture TEXT`, (err) => {
-                    // Ignore error if column already exists
-                });
-            });
+        // Create tables using PostgreSQL syntax
+        const createTables = `
+            CREATE TABLE IF NOT EXISTS users (
+                id SERIAL PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                email VARCHAR(255) UNIQUE NOT NULL,
+                password TEXT NOT NULL,
+                profile_picture TEXT
+            );
 
-            // Schedules Table
-            db.run(`CREATE TABLE IF NOT EXISTS schedules (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER NOT NULL,
-                course_name TEXT NOT NULL,
-                lecturer TEXT,
-                room TEXT,
-                day TEXT NOT NULL,
-                start_time TEXT NOT NULL,
-                end_time TEXT NOT NULL,
-                color TEXT DEFAULT '#3B82F6',
-                FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
-            )`);
+            CREATE TABLE IF NOT EXISTS schedules (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+                course_name VARCHAR(255) NOT NULL,
+                lecturer VARCHAR(255),
+                room VARCHAR(255),
+                day VARCHAR(50) NOT NULL,
+                start_time VARCHAR(50) NOT NULL,
+                end_time VARCHAR(50) NOT NULL,
+                color VARCHAR(50) DEFAULT '#3B82F6'
+            );
 
-            // Assignments Table
-            db.run(`CREATE TABLE IF NOT EXISTS assignments (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER NOT NULL,
-                title TEXT NOT NULL,
-                subject TEXT NOT NULL,
-                deadline TEXT NOT NULL,
-                status TEXT DEFAULT 'pending',
-                FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
-            )`);
+            CREATE TABLE IF NOT EXISTS assignments (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+                title VARCHAR(255) NOT NULL,
+                subject VARCHAR(255) NOT NULL,
+                deadline TIMESTAMP NOT NULL,
+                status VARCHAR(50) DEFAULT 'pending'
+            );
 
-            // Exams Table
-            db.run(`CREATE TABLE IF NOT EXISTS exams (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER NOT NULL,
-                subject TEXT NOT NULL,
-                exam_date TEXT NOT NULL,
-                room TEXT,
-                FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
-            )`);
+            CREATE TABLE IF NOT EXISTS exams (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+                subject VARCHAR(255) NOT NULL,
+                exam_date TIMESTAMP NOT NULL,
+                room VARCHAR(255)
+            );
+        `;
+
+        client.query(createTables, (err, result) => {
+            release();
+            if (err) {
+                console.error('Error creating tables', err.stack);
+            }
         });
     }
 });
 
-module.exports = db;
+module.exports = pool;
